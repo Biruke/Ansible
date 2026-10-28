@@ -1,0 +1,16 @@
+---
+# Connection settings for Arista EOS devices
+ansible_network_os: arista.eos.eos
+ansible_connection: ansible.netcommon.network_cli
+
+# Authentication (reads from environment variables or defaults to admin)
+# Never hardcode production passwords directly in files committed to GitHub!
+ansible_user: "{{ lookup('env', 'ARISTA_USER') | default('admin', true) }}"
+ansible_password: "{{ lookup('env', 'ARISTA_PASSWORD') | default(omit) }}"
+ansible_become: yes
+ansible_become_method: enable
+
+# Optional eAPI (httpapi) alternative configuration:
+# ansible_connection: ansible.netcommon.httpapi
+# ansible_httpapi_use_ssl: yes
+# ansible_httpapi_validate_certs: no

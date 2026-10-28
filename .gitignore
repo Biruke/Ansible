@@ -1,0 +1,20 @@
+# Credentials and local sensitive files
+*.vault_pass
+*.key
+*.pem
+.env
+*secrets*
+
+# Generated switch output reports (don't commit operational dumps if sensitive)
+outputs/*.txt
+outputs/*.json
+outputs/*.log
+!outputs/.gitkeep
+
+# Ansible retry and temp files
+*.retry
+.ansible/
+__pycache__/
+
+# VS Code settings
+.vscode/

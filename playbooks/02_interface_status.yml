@@ -1,0 +1,35 @@
+---
+- name: "Arista Fabric Read-Only Audit - Interface Status"
+  hosts: arista_fabric
+  gather_facts: false
+
+  tasks:
+    - name: Run show interface commands
+      arista.eos.eos_command:
+        commands:
+          - show ip interface brief
+          - show interfaces status
+      register: iface_output
+
+    - name: Ensure local outputs directory exists
+      ansible.builtin.file:
+        path: "../outputs"
+        state: directory
+      run_once: true
+      delegate_to: localhost
+
+    - name: Save interface status report to outputs folder
+      ansible.builtin.copy:
+        content: |
+          ==================================================
+          SWITCH: {{ inventory_hostname }} ({{ ansible_host }})
+          DATE: {{ ansible_date_time.iso8601 | default('N/A') }}
+          ==================================================
+
+          [SHOW IP INTERFACE BRIEF]
+          {{ iface_output.stdout[0] }}
+
+          [SHOW INTERFACES STATUS]
+          {{ iface_output.stdout[1] }}
+        dest: "../outputs/{{ inventory_hostname }}_interfaces.txt"
+      delegate_to: localhost

@@ -1,0 +1,22 @@
+---
+- name: "Arista Fabric Read-Only Audit - EOS Version & Uptime"
+  hosts: arista_fabric
+  gather_facts: false
+
+  tasks:
+    - name: Run 'show version' on switch
+      arista.eos.eos_command:
+        commands:
+          - show version | json
+      register: version_output
+
+    - name: Parse and display switch details
+      vars:
+        ver_json: "{{ version_output.stdout[0] }}"
+      ansible.builtin.debug:
+        msg:
+          - "Host: {{ inventory_hostname }} ({{ ansible_host }})"
+          - "Model: {{ ver_json.modelName | default('N/A') }}"
+          - "EOS Version: {{ ver_json.version | default('N/A') }}"
+          - "Uptime: {{ ver_json.uptime | default('N/A') }} seconds"
+          - "Serial Number: {{ ver_json.serialNumber | default('N/A') }}"

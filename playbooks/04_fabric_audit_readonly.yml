@@ -1,0 +1,59 @@
+---
+- name: "Arista Fabric Comprehensive Read-Only Health Audit"
+  hosts: arista_fabric
+  gather_facts: false
+
+  tasks:
+    - name: Collect baseline operational show commands
+      arista.eos.eos_command:
+        commands:
+          - show version
+          - show hostname
+          - show ip interface brief
+          - show lldp neighbors
+          - show ip route summary
+          - show ip bgp summary
+          - show environment all
+      register: audit_output
+
+    - name: Ensure local outputs directory exists
+      ansible.builtin.file:
+        path: "../outputs"
+        state: directory
+      run_once: true
+      delegate_to: localhost
+
+    - name: Save comprehensive audit report per switch
+      ansible.builtin.copy:
+        content: |
+          ######################################################################
+          ARISTA HEALTH AUDIT REPORT: {{ inventory_hostname }} ({{ ansible_host }})
+          ROLE: {{ role | default('unknown') }}
+          ######################################################################
+
+          --- [1. VERSION] ---
+          {{ audit_output.stdout[0] }}
+
+          --- [2. HOSTNAME] ---
+          {{ audit_output.stdout[1] }}
+
+          --- [3. IP INTERFACES] ---
+          {{ audit_output.stdout[2] }}
+
+          --- [4. LLDP NEIGHBORS] ---
+          {{ audit_output.stdout[3] }}
+
+          --- [5. ROUTING SUMMARY] ---
+          {{ audit_output.stdout[4] }}
+
+          --- [6. BGP SUMMARY] ---
+          {{ audit_output.stdout[5] }}
+
+          --- [7. HARDWARE ENVIRONMENT / POWER / FANS] ---
+          {{ audit_output.stdout[6] }}
+        dest: "../outputs/{{ inventory_hostname }}_health_audit.txt"
+      delegate_to: localhost
+
+    - name: Audit status banner
+      ansible.builtin.debug:
+        msg: "Completed audit for {{ inventory_hostname }}. Report saved to outputs/{{ inventory_hostname }}_health_audit.txt"

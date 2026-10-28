@@ -1,0 +1,37 @@
+---
+- name: "Arista Fabric Read-Only Audit - BGP & EVPN State"
+  hosts: arista_fabric
+  gather_facts: false
+
+  tasks:
+    - name: Run BGP and EVPN show commands
+      arista.eos.eos_command:
+        commands:
+          - show ip bgp summary
+          - show bgp evpn summary
+        wait_for:
+          - result[0] contains "BGP"
+      register: bgp_output
+      ignore_errors: true
+
+    - name: Ensure local outputs directory exists
+      ansible.builtin.file:
+        path: "../outputs"
+        state: directory
+      run_once: true
+      delegate_to: localhost
+
+    - name: Save BGP & EVPN summary to outputs folder
+      ansible.builtin.copy:
+        content: |
+          ==================================================
+          SWITCH: {{ inventory_hostname }} ({{ ansible_host }})
+          ==================================================
+
+          [SHOW IP BGP SUMMARY]
+          {{ bgp_output.stdout[0] | default('No IPv4 BGP configured or returned empty') }}
+
+          [SHOW BGP EVPN SUMMARY]
+          {{ bgp_output.stdout[1] | default('No EVPN BGP configured or returned empty') }}
+        dest: "../outputs/{{ inventory_hostname }}_bgp.txt"
+      delegate_to: localhost
